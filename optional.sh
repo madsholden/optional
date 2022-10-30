@@ -13,9 +13,12 @@ position_prefix="${OPTIONAL_POS_PREFIX:-POS}"
 while test $# -gt 0; do
     if [[ "${1:0:2}" == "--" ]]
     then
-        # long option
-        if [[ -z "$(echo $1 | grep '=')" ]]
+        if echo "$1" | grep -q '='
         then
+            # long with equals
+            name="$(echo "${1%%=*}" | sed 's/-/_/g')"
+            echo "${name:2}=\"${1#*=}\"" >> "${temp}"
+        else
             # long with space
             if [[ "${2:0:1}" == '-' || -z "$2" ]]
             then
@@ -27,16 +30,16 @@ while test $# -gt 0; do
                 echo "${name}=\"$2\"" >> "${temp}"
                 shift
             fi
-        else
-            # long with equals
-            name_with_dash="$(echo "${1%%=*}" | sed 's/-/_/g')"
-            echo "${name_with_dash:2}=\"${1#*=}\"" >> "${temp}"
         fi
     elif [[ "${1:0:1}" == "-" ]]
     then
         # short option
-        if [[ -z "$(echo $1 | grep '=')" ]]
+        if echo "$1" | grep -q '='
         then
+            # short with equals
+            name="${1%%=*}"
+            echo "${name:1}=\"${1#*=}\"" >> "${temp}"
+        else
             if [[ "${#1}" -eq 2 ]]
             then
                 # short with space
@@ -53,10 +56,6 @@ while test $# -gt 0; do
                 # short with no space
                 echo "${1:1:1}=\"${1:2}\"" >> "${temp}"
             fi
-        else
-            # short with equals
-            name_with_dash="${1%%=*}"
-            echo "${name_with_dash:1}=\"${1#*=}\"" >> "${temp}"
         fi
     else
         # unnamed option
